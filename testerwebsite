@@ -109,6 +109,8 @@
     input, select { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 6px; font: inherit; font-size: 16px; color: var(--text); background: var(--surface-solid); }
     input:focus, select:focus { outline: 3px solid rgba(31,111,95,0.16); border-color: var(--brand); }
 
+    .error { color: var(--danger); font-size: 13px; margin-top: 6px; }
+
     button { min-height: 42px; padding: 10px 14px; border: 0; border-radius: 6px; font-weight: 800; color: #fffaf0; background: linear-gradient(135deg, var(--brand), var(--brand-dark)); cursor: pointer; box-shadow: 0 8px 18px rgba(21,83,72,0.18); }
     button:hover { filter: brightness(1.04); transform: translateY(-1px); }
     button.secondary { color: var(--brand); background: color-mix(in srgb, var(--brand) 12%, var(--surface-solid)); box-shadow: none; }
@@ -215,14 +217,17 @@
         <label>
           Nama Pekerja
           <input id="workerName" type="text" placeholder="Contoh: Budi" required aria-required="true">
+          <div id="errorWorkerName" class="error" aria-live="polite"></div>
         </label>
         <label>
           Jabatan
           <input id="workerRole" type="text" placeholder="Contoh: Operator" required aria-required="true">
+          <div id="errorWorkerRole" class="error" aria-live="polite"></div>
         </label>
         <label>
           Gaji per Jam
           <input id="hourlyRate" type="number" min="0" step="500" placeholder="Contoh: 25000" required aria-required="true">
+          <div id="errorHourlyRate" class="error" aria-live="polite"></div>
         </label>
         <button type="submit">Tambah Pekerja</button>
       </form>
@@ -248,14 +253,17 @@
           <label>
             Pilih Pekerja
             <select id="attendanceWorker" required aria-required="true"></select>
+            <div id="errorAttendanceWorker" class="error" aria-live="polite"></div>
           </label>
           <label>
             Tanggal
             <input id="attendanceDate" type="date" required aria-required="true">
+            <div id="errorAttendanceDate" class="error" aria-live="polite"></div>
           </label>
           <label>
             Jam Kerja
             <input id="workHours" type="number" min="0" step="0.5" placeholder="Contoh: 8" required aria-required="true">
+            <div id="errorWorkHours" class="error" aria-live="polite"></div>
           </label>
           <button type="submit">Simpan Absensi</button>
         </form>
@@ -314,10 +322,28 @@
       <h2>Slip Gaji</h2>
       <div id="salarySlipArea" class="empty">Pilih pekerja untuk melihat slip gaji.</div>
     </section>
+
+    <section>
+      <h2>Sinkronisasi Cloud (Firebase)</h2>
+      <p>Optional: hubungkan ke Firebase untuk menyimpan/ memuat data. Anda perlu menyediakan konfigurasi Firebase (API key, dll.).</p>
+      <div class="toolbar-actions">
+        <button class="secondary" type="button" id="connectFirebaseBtn">Connect Firebase</button>
+        <button class="secondary" type="button" id="saveCloudBtn" disabled>Save to Cloud</button>
+        <button class="secondary" type="button" id="loadCloudBtn" disabled>Load from Cloud</button>
+      </div>
+      <div id="firebaseStatus" style="margin-top:8px;color:var(--muted);"></div>
+    </section>
+
   </main>
 
   <!-- Live region for optional messages -->
   <div id="liveMessage" role="status" aria-live="polite" style="position:fixed;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;"></div>
+
+  <!-- External libraries: jsPDF + AutoTable and Firebase compat (loaded before our inline script) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
     // Configuration
@@ -349,6 +375,10 @@
     const exportBtn = document.getElementById("exportBtn");
     const importBtn = document.getElementById("importBtn");
     const liveMessage = document.getElementById("liveMessage");
+    const connectFirebaseBtn = document.getElementById('connectFirebaseBtn');
+    const saveCloudBtn = document.getElementById('saveCloudBtn');
+    const loadCloudBtn = document.getElementById('loadCloudBtn');
+    const firebaseStatus = document.getElementById('firebaseStatus');
 
     // App state
     let workers = JSON.parse(localStorage.getItem("workers")) || [];
@@ -359,9 +389,15 @@
     let massWorkersVisible = localStorage.getItem("massWorkersVisible") !== "false";
     let lastDeleted = null; // for undo
 
+    // Firebase state
+    let firebaseApp = null;
+    let db = null;
+
     // Defaults
-    document.getElementById("attendanceDate").valueAsDate = new Date();
-    document.getElementById("massAttendanceDate").valueAsDate = new Date();
+    const attendanceDateEl = document.getElementById('attendanceDate');
+    const massAttendanceDateEl = document.getElementById('massAttendanceDate');
+    if (attendanceDateEl) attendanceDateEl.valueAsDate = new Date();
+    if (massAttendanceDateEl) massAttendanceDateEl.valueAsDate = new Date();
 
     // Utility: simple HTML escape to prevent injection
     function escapeHTML(str) {
@@ -369,7 +405,7 @@
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
+        .replace(/\"/g, "&quot;")
         .replace(/'/g, "&#39;");
     }
 
@@ -612,6 +648,10 @@
       setTimeout(() => { liveMessage.textContent = message; }, 50);
     }
 
+    // Validation helpers
+    function showError(id, message) { const el = document.getElementById(id); if (el) el.textContent = message; }
+    function clearErrors() { ['errorWorkerName','errorWorkerRole','errorHourlyRate','errorAttendanceWorker','errorAttendanceDate','errorWorkHours'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; }); }
+
     // Actions
     function addWorker(name, role, rate) {
       const worker = { id: createId(), name: name.trim(), role: role.trim(), rate: Number(rate) };
@@ -626,7 +666,6 @@
       if (idx === -1) return;
       lastDeleted = { type: 'worker', data: workers[idx], relatedAttendances: attendances.filter(a => a.workerId === id) };
       workers.splice(idx,1);
-      // Keep attendances but mark worker removed (or optionally remove). Here we keep attendances as-is.
       saveData(); renderAll(); announce('Pekerja dihapus. Tekan Ctrl+Z untuk undo.');
     }
 
@@ -647,36 +686,78 @@
     // Expose removeFromMassList globally for inline handlers if any exist
     window.removeFromMassList = removeFromMassList;
 
+    // jsPDF generation
+    function generatePdfForWorker(workerId) {
+      const worker = workers.find(w => w.id === workerId);
+      if (!worker) { announce('Pilih pekerja terlebih dahulu'); return; }
+      const records = attendances.filter(a => a.workerId === workerId).sort((a,b) => a.date.localeCompare(b.date));
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const margin = 40;
+      doc.setFontSize(14);
+      doc.text('Slip Gaji', margin, 40);
+      doc.setFontSize(11);
+      doc.text(`Nama: ${worker.name}`, margin, 70);
+      doc.text(`Jabatan: ${worker.role}`, margin, 88);
+      doc.text(`Gaji per Jam: ${rupiah.format(worker.rate)}`, margin, 106);
+
+      const tableBody = records.map(r => {
+        const s = calculateSalary(Number(r.hours), worker.rate);
+        return [r.date, `${r.hours} jam`, rupiah.format(s.totalPay)];
+      });
+
+      // AutoTable if available
+      if (doc.autoTable) {
+        doc.autoTable({ head: [['Tanggal','Jam Kerja','Total']], body: tableBody, startY: 140, margin: { left: margin, right: margin } });
+        const finalY = doc.lastAutoTable.finalY || 140;
+        doc.text(`Total: ${rupiah.format(tableBody.reduce((acc, row) => acc + Number(row[2].replace(/[^0-9]/g,'')),0))}`, margin, finalY + 30);
+      } else {
+        // Basic table
+        let y = 140;
+        tableBody.forEach(row => { doc.text(row.join(' - '), margin, y); y += 18; });
+      }
+
+      doc.save(`${worker.name.replace(/\s+/g,'_')}_slip.pdf`);
+    }
+
     // Event wiring
     workerForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const name = document.getElementById('workerName').value;
-      const role = document.getElementById('workerRole').value;
-      const rate = document.getElementById('hourlyRate').value;
-      if (!name.trim() || !role.trim() || Number(rate) < 0) { announce('Periksa input pekerja'); return; }
+      e.preventDefault(); clearErrors();
+      const nameEl = document.getElementById('workerName');
+      const roleEl = document.getElementById('workerRole');
+      const rateEl = document.getElementById('hourlyRate');
+      const name = nameEl.value.trim(); const role = roleEl.value.trim(); const rate = Number(rateEl.value);
+      let ok = true;
+      if (!name) { showError('errorWorkerName','Nama harus diisi'); ok = false; }
+      if (!role) { showError('errorWorkerRole','Jabatan harus diisi'); ok = false; }
+      if (!Number.isFinite(rate) || rate < 0) { showError('errorHourlyRate','Masukkan jumlah gaji yang valid (>= 0)'); ok = false; }
+      if (!ok) { announce('Periksa input pekerja'); return; }
       addWorker(name, role, rate);
       workerForm.reset();
     });
 
     attendanceForm.addEventListener('submit', (e) => {
-      e.preventDefault();
+      e.preventDefault(); clearErrors();
       const workerId = attendanceWorker.value;
       const date = document.getElementById('attendanceDate').value;
-      const hours = document.getElementById('workHours').value;
-      if (!workerId) { announce('Pilih pekerja terlebih dahulu'); return; }
-      if (!date || Number(hours) < 0) { announce('Periksa input absensi'); return; }
+      const hours = Number(document.getElementById('workHours').value);
+      let ok = true;
+      if (!workerId) { showError('errorAttendanceWorker','Pilih pekerja'); ok = false; }
+      if (!date) { showError('errorAttendanceDate','Pilih tanggal'); ok = false; }
+      if (!Number.isFinite(hours) || hours < 0) { showError('errorWorkHours','Masukkan jam kerja yang valid'); ok = false; }
+      if (!ok) { announce('Periksa input absensi'); return; }
       const attendance = { id: createId(), workerId, date, hours: Number(hours) };
       attendances.push(attendance);
       saveData(); renderAll(); announce('Absensi tersimpan');
       attendanceForm.reset();
-      document.getElementById('attendanceDate').valueAsDate = new Date();
+      if (attendanceDateEl) attendanceDateEl.valueAsDate = new Date();
     });
 
     massAttendanceForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const date = document.getElementById('massAttendanceDate').value;
       const hours = Number(document.getElementById('massWorkHours').value);
-      if (!date || Number(hours) < 0) { announce('Periksa input absensi massal'); return; }
+      if (!date || !Number.isFinite(hours) || hours < 0) { announce('Periksa input absensi massal'); return; }
       const checks = Array.from(document.querySelectorAll('.mass-worker-check'));
       const selected = checks.filter(c => c.checked).map(c => c.value);
       if (!selected.length) { announce('Tidak ada pekerja terpilih'); return; }
@@ -684,10 +765,7 @@
       saveData(); renderAll(); announce('Absensi massal tersimpan');
     });
 
-    slipForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      showSlip();
-    });
+    slipForm.addEventListener('submit', (e) => { e.preventDefault(); const workerId = slipWorker.value; showSlip(workerId); });
 
     // Buttons
     toggleWorkersBtn.addEventListener('click', () => { workersVisible = !workersVisible; updateWorkersVisibility(); });
@@ -706,10 +784,15 @@
     clearMassBtn.addEventListener('click', () => { document.querySelectorAll('.mass-worker-check').forEach(c => c.checked = false); announce('Pilihan massal dikosongkan'); });
 
     downloadSlipBtn.addEventListener('click', () => {
-      // If a slip is showing, open print dialog for the slip content
-      const printArea = document.getElementById('printArea');
-      if (!printArea) { announce('Tidak ada slip untuk dicetak. Pilih pekerja dan lihat slip terlebih dahulu.'); return; }
-      window.print();
+      const workerId = slipWorker.value;
+      if (!workerId) { announce('Tidak ada slip untuk dicetak. Pilih pekerja dan lihat slip terlebih dahulu.'); return; }
+      // Generate PDF using jsPDF
+      try {
+        generatePdfForWorker(workerId);
+      } catch (err) {
+        console.error(err);
+        announce('Gagal membuat PDF: ' + (err.message || 'error'));
+      }
     });
 
     themeToggle.addEventListener('click', () => { const next = document.documentElement.dataset.theme === 'night' ? 'day' : 'night'; setTheme(next); });
@@ -776,6 +859,49 @@
       }
     });
 
+    // Firebase connect/save/load
+    connectFirebaseBtn.addEventListener('click', async () => {
+      const txt = prompt('Tempel JSON konfigurasi Firebase (object dengan apiKey, authDomain, projectId, dll.).\n\nContoh: {"apiKey":"...","authDomain":"...","projectId":"..."}');
+      if (!txt) return;
+      try {
+        const cfg = JSON.parse(txt);
+        // initialize
+        if (firebaseApp) {
+          firebase.app().delete && await firebase.app().delete();
+          firebaseApp = null; db = null;
+        }
+        firebase.initializeApp(cfg);
+        firebaseApp = firebase.app();
+        db = firebase.firestore();
+        firebaseStatus.textContent = 'Firebase terhubung ke project: ' + (cfg.projectId || 'unknown');
+        saveCloudBtn.disabled = false; loadCloudBtn.disabled = false;
+        announce('Firebase terhubung');
+      } catch (err) {
+        alert('Gagal mem-parsing konfigurasi Firebase: ' + err.message);
+      }
+    });
+
+    saveCloudBtn.addEventListener('click', async () => {
+      if (!db) return alert('Firebase belum terhubung');
+      try {
+        await db.collection('attendanceApp').doc('data').set({ workers, attendances, updated: Date.now() });
+        announce('Data tersimpan ke cloud');
+      } catch (err) { alert('Gagal menyimpan ke cloud: ' + err.message); }
+    });
+
+    loadCloudBtn.addEventListener('click', async () => {
+      if (!db) return alert('Firebase belum terhubung');
+      try {
+        const doc = await db.collection('attendanceApp').doc('data').get();
+        if (!doc.exists) return alert('Belum ada data di cloud');
+        const data = doc.data();
+        if (Array.isArray(data.workers) && Array.isArray(data.attendances)) {
+          if (!confirm('Memuat data dari cloud akan menimpa data lokal. Lanjutkan?')) return;
+          workers = data.workers; attendances = data.attendances; saveData(); renderAll(); announce('Data dimuat dari cloud');
+        } else alert('Format data cloud tidak dikenali');
+      } catch (err) { alert('Gagal memuat dari cloud: ' + err.message); }
+    });
+
     // Persistence & render
     function renderAll() {
       renderWorkerOptions(); renderWorkers(); renderAttendances(); renderMassWorkers(); updateWorkersVisibility(); updateAttendanceVisibility(); updateMassWorkersVisibility();
@@ -785,21 +911,19 @@
 
     function renderSlipSelection() {
       // Keep slipWorker options selected if possible
-      // If no worker selected, choose first
       if (!workers.length) {
         slipWorkerField.classList.add('is-hidden');
+      } else {
+        slipWorkerField.classList.remove('is-hidden');
       }
     }
 
     // Initial setup
     (function init() {
-      // Set theme button text
       const theme = document.documentElement.dataset.theme || 'day';
       themeToggle.textContent = theme === 'night' ? 'Mode Siang' : 'Mode Malam';
       themeToggle.setAttribute('aria-pressed', String(theme === 'night'));
-
       renderAll();
-      // Accessibility: focus states and instructions
       announce('Aplikasi absensi siap');
     })();
 
