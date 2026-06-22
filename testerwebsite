@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Website Absensi Pekerja</title>
   <script>
+    // Load saved theme early to avoid FOUC
     const savedTheme = localStorage.getItem("theme") || "day";
     document.documentElement.dataset.theme = savedTheme;
   </script>
@@ -52,9 +53,7 @@
       --hero-overlay: linear-gradient(135deg, rgba(10, 18, 16, 0.96), rgba(28, 52, 46, 0.88));
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -85,525 +84,111 @@
       overflow: hidden;
       padding: 28px 24px 34px;
       color: var(--header-text);
-      background:
-        var(--hero-overlay),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='420' viewBox='0 0 900 420'%3E%3Crect width='900' height='420' fill='%23362420'/%3E%3Cg opacity='.34' fill='none' stroke='%23d8b174' stroke-width='2'%3E%3Cpath d='M82 128c42-46 99-45 137 0 38 45 95 46 137 0 42-46 99-45 137 0 38 45 95 46 137 0 42-46 99-45 137 0'/%3E%3Cpath d='M62 260c42-46 99-45 137 0 38 45 95 46 137 0 42-46 99-45 137 0 38 45 95 46 137 0 42-46 99-45 137 0'/%3E%3C/g%3E%3Cg opacity='.42' fill='%23d8b174'%3E%3Cellipse cx='142' cy='82' rx='18' ry='31' transform='rotate(24 142 82)'/%3E%3Cellipse cx='704' cy='324' rx='18' ry='31' transform='rotate(-26 704 324)'/%3E%3Cellipse cx='792' cy='104' rx='13' ry='23' transform='rotate(18 792 104)'/%3E%3C/g%3E%3C/svg%3E");
+      background: var(--hero-overlay), linear-gradient(90deg, rgba(0,0,0,0.05), rgba(255,255,255,0.02));
       background-size: cover;
       box-shadow: var(--shadow);
     }
 
-    .hero-inner {
-      position: relative;
-      z-index: 1;
-      width: min(1180px, calc(100% - 8px));
-      margin: 0 auto;
-      display: flex;
-      gap: 18px;
-      justify-content: space-between;
-      align-items: center;
-    }
+    .hero-inner { position: relative; z-index: 1; width: min(1180px, calc(100% - 8px)); margin: 0 auto; display: flex; gap: 18px; justify-content: space-between; align-items: center; }
+    .brand-row { display: flex; gap: 16px; align-items: center; }
 
-    .brand-row {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-    }
+    .brand-mark { width: 62px; height: 62px; display: grid; place-items: center; border: 1px solid rgba(255, 250, 240, 0.26); border-radius: 8px; background: rgba(255, 250, 240, 0.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); }
+    .brand-mark::before { content: ""; width: 34px; height: 24px; border: 3px solid #f3d6a6; border-top: 0; border-radius: 0 0 13px 13px; }
 
-    .brand-mark {
-      width: 62px;
-      height: 62px;
-      display: grid;
-      place-items: center;
-      border: 1px solid rgba(255, 250, 240, 0.26);
-      border-radius: 8px;
-      background: rgba(255, 250, 240, 0.12);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
-    }
+    header h1 { margin: 0 0 7px; font-size: clamp(27px, 4vw, 44px); line-height: 1; }
+    header p { margin: 0; max-width: 680px; color: rgba(255,250,240,0.9); font-size: 15px; }
 
-    .brand-mark::before {
-      content: "";
-      width: 34px;
-      height: 24px;
-      border: 3px solid #f3d6a6;
-      border-top: 0;
-      border-radius: 0 0 13px 13px;
-      box-shadow: 19px 3px 0 -9px transparent, 19px 3px 0 -6px #f3d6a6;
-    }
+    .theme-toggle { min-width: 126px; border: 1px solid rgba(255,250,240,0.26); color: var(--header-text); background: rgba(255,250,240,0.12); backdrop-filter: blur(10px); padding: 10px; border-radius: 6px; }
 
-    header h1 {
-      margin: 0 0 7px;
-      font-size: clamp(27px, 4vw, 44px);
-      line-height: 1;
-      letter-spacing: 0;
-    }
+    main { position: relative; z-index: 1; width: min(1180px, calc(100% - 32px)); margin: 24px auto 36px; display: grid; gap: 18px; }
+    section { padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); backdrop-filter: blur(16px); }
+    h2 { margin: 0 0 14px; font-size: 20px; color: var(--text); }
 
-    header p {
-      margin: 0;
-      max-width: 680px;
-      color: rgba(255, 250, 240, 0.82);
-      font-size: 15px;
-    }
+    form { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 12px; align-items: end; }
+    label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; color: var(--muted); }
+    input, select { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 6px; font: inherit; font-size: 16px; color: var(--text); background: var(--surface-solid); }
+    input:focus, select:focus { outline: 3px solid rgba(31,111,95,0.16); border-color: var(--brand); }
 
-    .theme-toggle {
-      min-width: 126px;
-      border: 1px solid rgba(255, 250, 240, 0.26);
-      color: var(--header-text);
-      background: rgba(255, 250, 240, 0.12);
-      backdrop-filter: blur(10px);
-    }
+    button { min-height: 42px; padding: 10px 14px; border: 0; border-radius: 6px; font-weight: 800; color: #fffaf0; background: linear-gradient(135deg, var(--brand), var(--brand-dark)); cursor: pointer; box-shadow: 0 8px 18px rgba(21,83,72,0.18); }
+    button:hover { filter: brightness(1.04); transform: translateY(-1px); }
+    button.secondary { color: var(--brand); background: color-mix(in srgb, var(--brand) 12%, var(--surface-solid)); box-shadow: none; }
+    button.danger { color: white; background: linear-gradient(135deg, var(--danger), #8f3322); }
 
-    main {
-      position: relative;
-      z-index: 1;
-      width: min(1180px, calc(100% - 32px));
-      margin: 24px auto 36px;
-      display: grid;
-      gap: 18px;
-    }
+    .button-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+    .button-group button { flex: 1 1 150px; }
+    .slip-picker { display: grid; gap: 8px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .toolbar-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .is-hidden { display: none; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; background: var(--surface-solid); }
+    th, td { padding: 12px 11px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: 14px; }
+    th { color: var(--muted); background: color-mix(in srgb, var(--accent) 13%, var(--surface-solid)); font-size: 12px; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    .empty { padding: 22px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); text-align: center; background: var(--surface-soft); }
 
-    section {
-      padding: 20px;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(16px);
-    }
+    .summary { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .summary div { padding: 15px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-solid); }
+    .summary span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+    .summary strong { font-size: 18px; color: var(--text); }
 
-    h2 {
-      margin: 0 0 14px;
-      font-size: 20px;
-      color: var(--text);
-    }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .actions button { min-height: 34px; padding: 8px 10px; font-size: 13px; }
 
-    form {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(150px, 1fr));
-      gap: 12px;
-      align-items: end;
-    }
-
-    label {
-      display: grid;
-      gap: 7px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--muted);
-    }
-
-    input,
-    select {
-      width: 100%;
-      padding: 11px 12px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      font: inherit;
-      font-size: 16px;
-      color: var(--text);
-      background: var(--surface-solid);
-    }
-
-    input:focus,
-    select:focus {
-      outline: 3px solid rgba(31, 111, 95, 0.16);
-      border-color: var(--brand);
-    }
-
-    button {
-      min-height: 42px;
-      padding: 10px 14px;
-      border: 0;
-      border-radius: 6px;
-      font-weight: 800;
-      color: #fffaf0;
-      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
-      cursor: pointer;
-      box-shadow: 0 8px 18px rgba(21, 83, 72, 0.18);
-    }
-
-    button:hover {
-      filter: brightness(1.04);
-      transform: translateY(-1px);
-    }
-
-    button.secondary {
-      color: var(--brand);
-      background: color-mix(in srgb, var(--brand) 12%, var(--surface-solid));
-      box-shadow: none;
-    }
-
-    button.danger {
-      color: white;
-      background: linear-gradient(135deg, var(--danger), #8f3322);
-    }
-
-    .button-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: end;
-    }
-
-    .button-group button {
-      flex: 1 1 150px;
-    }
-
-    .slip-picker {
-      display: grid;
-      gap: 8px;
-    }
-
-    .slip-picker label {
-      margin-top: 2px;
-    }
-
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .toolbar-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .is-hidden {
-      display: none;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 720px;
-      background: var(--surface-solid);
-    }
-
-    th,
-    td {
-      padding: 12px 11px;
-      border-bottom: 1px solid var(--line);
-      text-align: left;
-      vertical-align: top;
-      font-size: 14px;
-    }
-
-    th {
-      color: var(--muted);
-      background: color-mix(in srgb, var(--accent) 13%, var(--surface-solid));
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0;
-    }
-
-    tr:last-child td {
-      border-bottom: 0;
-    }
-
-    .empty {
-      padding: 22px;
-      border: 1px dashed var(--line);
-      border-radius: 8px;
-      color: var(--muted);
-      text-align: center;
-      background: var(--surface-soft);
-    }
-
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(140px, 1fr));
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .summary div {
-      padding: 15px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--surface-solid);
-    }
-
-    .summary span {
-      display: block;
-      margin-bottom: 7px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 800;
-      text-transform: uppercase;
-    }
-
-    .summary strong {
-      font-size: 18px;
-      color: var(--text);
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .actions button {
-      min-height: 34px;
-      padding: 8px 10px;
-      font-size: 13px;
-    }
-
-    .mass-card {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid var(--line);
-    }
-
-    .mass-form {
-      grid-template-columns: repeat(3, minmax(150px, 1fr));
-    }
-
-    .mass-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 12px 0;
-    }
-
-    .mass-list {
-      display: grid;
-      gap: 8px;
-      max-height: 260px;
-      overflow: auto;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--surface-solid);
-    }
-
-    .mass-worker {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--surface-soft);
-    }
-
-    .mass-worker label {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      color: var(--text);
-      font-size: 14px;
-    }
-
-    .mass-worker input {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--brand);
-    }
-
-    .mass-worker small {
-      display: block;
-      margin-top: 3px;
-      color: var(--muted);
-      font-weight: 600;
-    }
+    .mass-card { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .mass-form { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
+    .mass-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .mass-list { display: grid; gap: 8px; max-height: 260px; overflow: auto; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-solid); }
+    .mass-worker { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); }
+    .mass-worker label { display: flex; gap: 10px; align-items: center; color: var(--text); font-size: 14px; }
+    .mass-worker input { width: 18px; height: 18px; accent-color: var(--brand); }
+    .mass-worker small { display: block; margin-top: 3px; color: var(--muted); font-weight: 600; }
 
     @media (max-width: 860px) {
-      .hero-inner,
-      .brand-row {
-        align-items: flex-start;
-      }
-
-      .hero-inner {
-        flex-direction: column;
-      }
-
-      form,
-      .grid-2,
-      .mass-form,
-      .summary {
-        grid-template-columns: 1fr;
-      }
-
-      .mass-worker {
-        grid-template-columns: 1fr;
-      }
+      .hero-inner, .brand-row { align-items: flex-start; }
+      .hero-inner { flex-direction: column; }
+      form, .grid-2, .mass-form, .summary { grid-template-columns: 1fr; }
+      .mass-worker { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 560px) {
-      body::before {
-        opacity: 0.26;
-        background-size: 34px 34px;
-      }
+      body::before { opacity: 0.26; background-size: 34px 34px; }
+      header { padding: 18px 14px 22px; }
+      .hero-inner { width: 100%; gap: 14px; }
+      .brand-row { gap: 12px; }
+      .brand-mark { width: 48px; height: 48px; flex: 0 0 48px; }
+      header h1 { font-size: 25px; line-height: 1.08; }
+      header p { font-size: 13px; line-height: 1.45; }
+      .theme-toggle { width: 100%; }
+      main { width: calc(100% - 20px); margin: 14px auto 24px; gap: 12px; }
+      section { padding: 14px; box-shadow: 0 10px 28px rgba(37,50,47,0.1); }
+      h2 { font-size: 18px; margin-bottom: 12px; }
+      form { gap: 10px; }
+      button { width: 100%; min-height: 46px; padding: 11px 12px; font-size: 14px; }
+      .toolbar { align-items: stretch; }
+      .toolbar h2 { width: 100%; margin-bottom: 0; }
+      .toolbar-actions, .button-group, .mass-actions, .actions { width: 100%; display: grid; grid-template-columns: 1fr; }
+      .table-wrap { margin-inline: -4px; border-radius: 6px; -webkit-overflow-scrolling: touch; }
+      table { min-width: 620px; }
+      th, td { padding: 10px 9px; font-size: 13px; white-space: nowrap; }
+      td:first-child, th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface-solid); }
+      th:first-child { background: color-mix(in srgb, var(--accent) 13%, var(--surface-solid)); }
+      .summary { gap: 8px; margin-bottom: 10px; }
+      .summary div { padding: 12px; }
+      .summary strong { font-size: 16px; overflow-wrap: anywhere; }
+      .mass-list { max-height: 340px; padding: 8px; }
+      .mass-worker { padding: 10px; }
+      .mass-worker label { align-items: flex-start; line-height: 1.35; }
+      .mass-worker input { margin-top: 2px; flex: 0 0 18px; }
+      .empty { padding: 16px; font-size: 14px; }
+    }
 
-      header {
-        padding: 18px 14px 22px;
-      }
-
-      .hero-inner {
-        width: 100%;
-        gap: 14px;
-      }
-
-      .brand-row {
-        gap: 12px;
-      }
-
-      .brand-mark {
-        width: 48px;
-        height: 48px;
-        flex: 0 0 48px;
-      }
-
-      .brand-mark::before {
-        width: 26px;
-        height: 19px;
-        border-width: 2px;
-        box-shadow: 15px 3px 0 -8px transparent, 15px 3px 0 -5px #f3d6a6;
-      }
-
-      header h1 {
-        font-size: 25px;
-        line-height: 1.08;
-      }
-
-      header p {
-        font-size: 13px;
-        line-height: 1.45;
-      }
-
-      .theme-toggle {
-        width: 100%;
-      }
-
-      main {
-        width: calc(100% - 20px);
-        margin: 14px auto 24px;
-        gap: 12px;
-      }
-
-      section {
-        padding: 14px;
-        box-shadow: 0 10px 28px rgba(37, 50, 47, 0.1);
-      }
-
-      h2 {
-        font-size: 18px;
-        margin-bottom: 12px;
-      }
-
-      form {
-        gap: 10px;
-      }
-
-      button {
-        width: 100%;
-        min-height: 46px;
-        padding: 11px 12px;
-        font-size: 14px;
-      }
-
-      .toolbar {
-        align-items: stretch;
-      }
-
-      .toolbar h2 {
-        width: 100%;
-        margin-bottom: 0;
-      }
-
-      .toolbar-actions,
-      .button-group,
-      .mass-actions,
-      .actions {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr;
-      }
-
-      .table-wrap {
-        margin-inline: -4px;
-        border-radius: 6px;
-        -webkit-overflow-scrolling: touch;
-      }
-
-      table {
-        min-width: 620px;
-      }
-
-      th,
-      td {
-        padding: 10px 9px;
-        font-size: 13px;
-        white-space: nowrap;
-      }
-
-      td:first-child,
-      th:first-child {
-        position: sticky;
-        left: 0;
-        z-index: 1;
-        background: var(--surface-solid);
-      }
-
-      th:first-child {
-        background: color-mix(in srgb, var(--accent) 13%, var(--surface-solid));
-      }
-
-      .summary {
-        gap: 8px;
-        margin-bottom: 10px;
-      }
-
-      .summary div {
-        padding: 12px;
-      }
-
-      .summary strong {
-        font-size: 16px;
-        overflow-wrap: anywhere;
-      }
-
-      .mass-list {
-        max-height: 340px;
-        padding: 8px;
-      }
-
-      .mass-worker {
-        padding: 10px;
-      }
-
-      .mass-worker label {
-        align-items: flex-start;
-        line-height: 1.35;
-      }
-
-      .mass-worker input {
-        margin-top: 2px;
-        flex: 0 0 18px;
-      }
-
-      .empty {
-        padding: 16px;
-        font-size: 14px;
-      }
+    /* Print styles for salary slip */
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea { position: absolute; left: 0; top: 0; width: 100%; }
     }
   </style>
 </head>
@@ -614,28 +199,30 @@
         <div class="brand-mark" aria-hidden="true"></div>
         <div>
           <h1>Absensi Otomatis</h1>
-          <p>project pertama saya, yang seadanya,apabila ada bug bisa beritahu saya 085721439894.</p>
+          <p>Project sederhana untuk mencatat absensi dan menghitung slip gaji. Jika ada masukan, hubungi: <a href="mailto:hubungi@contoh.com">hubungi@contoh.com</a></p>
         </div>
       </div>
-      <button class="theme-toggle" type="button" id="themeToggle">Mode Malam</button>
+      <div>
+        <button class="theme-toggle" type="button" id="themeToggle" aria-pressed="false">Mode Malam</button>
+      </div>
     </div>
   </header>
 
   <main>
-    <section>
-      <h2>Tambahkan Pekerja</h2>
+    <section aria-labelledby="add-worker-title">
+      <h2 id="add-worker-title">Tambahkan Pekerja</h2>
       <form id="workerForm">
         <label>
           Nama Pekerja
-          <input id="workerName" type="text" placeholder="Contoh: Budi" required>
+          <input id="workerName" type="text" placeholder="Contoh: Budi" required aria-required="true">
         </label>
         <label>
           Jabatan
-          <input id="workerRole" type="text" placeholder="Contoh: Operator" required>
+          <input id="workerRole" type="text" placeholder="Contoh: Operator" required aria-required="true">
         </label>
         <label>
           Gaji per Jam
-          <input id="hourlyRate" type="number" min="0" step="500" placeholder="Contoh: 25000" required>
+          <input id="hourlyRate" type="number" min="0" step="500" placeholder="Contoh: 25000" required aria-required="true">
         </label>
         <button type="submit">Tambah Pekerja</button>
       </form>
@@ -646,10 +233,12 @@
         <h2>Daftar Pekerja</h2>
         <div class="toolbar-actions">
           <button class="secondary" type="button" id="toggleWorkersBtn">Sembunyikan</button>
+          <button class="secondary" type="button" id="exportBtn" title="Ekspor data" aria-label="Ekspor data">Ekspor</button>
+          <button class="secondary" type="button" id="importBtn" title="Impor data" aria-label="Impor data">Impor</button>
           <button class="secondary" type="button" id="clearAllBtn">Bersihkan Semua Data</button>
         </div>
       </div>
-      <div id="workersArea"></div>
+      <div id="workersArea" aria-live="polite"></div>
     </section>
 
     <section class="grid-2">
@@ -658,15 +247,15 @@
         <form id="attendanceForm">
           <label>
             Pilih Pekerja
-            <select id="attendanceWorker" required></select>
+            <select id="attendanceWorker" required aria-required="true"></select>
           </label>
           <label>
             Tanggal
-            <input id="attendanceDate" type="date" required>
+            <input id="attendanceDate" type="date" required aria-required="true">
           </label>
           <label>
             Jam Kerja
-            <input id="workHours" type="number" min="0" step="0.5" placeholder="Contoh: 8" required>
+            <input id="workHours" type="number" min="0" step="0.5" placeholder="Contoh: 8" required aria-required="true">
           </label>
           <button type="submit">Simpan Absensi</button>
         </form>
@@ -679,11 +268,11 @@
           <form id="massAttendanceForm" class="mass-form">
             <label>
               Tanggal Absensi
-              <input id="massAttendanceDate" type="date" required>
+              <input id="massAttendanceDate" type="date" required aria-required="true">
             </label>
             <label>
               Jam Kerja Semua
-              <input id="massWorkHours" type="number" min="0" step="0.5" placeholder="Contoh: 8" required>
+              <input id="massWorkHours" type="number" min="0" step="0.5" placeholder="Contoh: 8" required aria-required="true">
             </label>
             <button type="submit">Simpan Absensi Massal</button>
           </form>
@@ -691,7 +280,7 @@
             <button class="secondary" type="button" id="selectAllMassBtn">Pilih Semua</button>
             <button class="secondary" type="button" id="clearMassBtn">Kosongkan Pilihan</button>
           </div>
-          <div id="massWorkersArea" class="mass-list"></div>
+          <div id="massWorkersArea" class="mass-list" aria-live="polite"></div>
         </div>
       </div>
 
@@ -702,7 +291,7 @@
             <button class="secondary" type="button" id="toggleSlipPickerBtn">Pilih Pekerja</button>
             <label id="slipWorkerField" class="is-hidden">
               Nama Pekerja
-              <select id="slipWorker" required></select>
+              <select id="slipWorker" required aria-required="true"></select>
             </label>
           </div>
           <div class="button-group">
@@ -718,7 +307,7 @@
         <h2>Riwayat Absensi</h2>
         <button class="secondary" type="button" id="toggleAttendanceBtn">Sembunyikan</button>
       </div>
-      <div id="attendanceArea"></div>
+      <div id="attendanceArea" aria-live="polite"></div>
     </section>
 
     <section>
@@ -727,15 +316,16 @@
     </section>
   </main>
 
+  <!-- Live region for optional messages -->
+  <div id="liveMessage" role="status" aria-live="polite" style="position:fixed;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;"></div>
+
   <script>
+    // Configuration
     const BASIC_HOURS = 7;
     const OVERTIME_MULTIPLIER = 1.5;
-    const rupiah = new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      maximumFractionDigits: 0
-    });
+    const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 
+    // Elements
     const workerForm = document.getElementById("workerForm");
     const attendanceForm = document.getElementById("attendanceForm");
     const massAttendanceForm = document.getElementById("massAttendanceForm");
@@ -756,28 +346,43 @@
     const selectAllMassBtn = document.getElementById("selectAllMassBtn");
     const clearMassBtn = document.getElementById("clearMassBtn");
     const themeToggle = document.getElementById("themeToggle");
+    const exportBtn = document.getElementById("exportBtn");
+    const importBtn = document.getElementById("importBtn");
+    const liveMessage = document.getElementById("liveMessage");
 
+    // App state
     let workers = JSON.parse(localStorage.getItem("workers")) || [];
     let attendances = JSON.parse(localStorage.getItem("attendances")) || [];
     let excludedMassWorkers = [];
     let workersVisible = localStorage.getItem("workersVisible") !== "false";
     let attendanceVisible = localStorage.getItem("attendanceVisible") !== "false";
     let massWorkersVisible = localStorage.getItem("massWorkersVisible") !== "false";
+    let lastDeleted = null; // for undo
 
+    // Defaults
     document.getElementById("attendanceDate").valueAsDate = new Date();
     document.getElementById("massAttendanceDate").valueAsDate = new Date();
+
+    // Utility: simple HTML escape to prevent injection
+    function escapeHTML(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
 
     function setTheme(theme) {
       document.documentElement.dataset.theme = theme;
       localStorage.setItem("theme", theme);
       themeToggle.textContent = theme === "night" ? "Mode Siang" : "Mode Malam";
+      themeToggle.setAttribute("aria-pressed", String(theme === "night"));
+      announce(`Tema diatur ke ${theme === 'night' ? 'Malem' : 'Siang'}`);
     }
 
     function createId() {
-      if (window.crypto && window.crypto.randomUUID) {
-        return window.crypto.randomUUID();
-      }
-
+      if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
       return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     }
 
@@ -809,14 +414,7 @@
       const overtimeHours = Math.max(hours - BASIC_HOURS, 0);
       const basicPay = basicHours * rate;
       const overtimePay = overtimeHours * rate * OVERTIME_MULTIPLIER;
-
-      return {
-        basicHours,
-        overtimeHours,
-        basicPay,
-        overtimePay,
-        totalPay: basicPay + overtimePay
-      };
+      return { basicHours, overtimeHours, basicPay, overtimePay, totalPay: basicPay + overtimePay };
     }
 
     function workerNameById(id) {
@@ -825,24 +423,20 @@
     }
 
     function renderWorkerOptions() {
-      const options = workers
-        .map((worker) => `<option value="${worker.id}">${worker.name}</option>`)
-        .join("");
+      const options = workers.map((worker) => `<option value="${worker.id}">${escapeHTML(worker.name)}</option>`).join("");
       const emptyOption = '<option value="">Belum ada pekerja</option>';
-
       attendanceWorker.innerHTML = workers.length ? options : emptyOption;
       slipWorker.innerHTML = workers.length ? options : emptyOption;
     }
 
     function renderMassWorkers() {
-      excludedMassWorkers = excludedMassWorkers.filter((id) => workers.some((worker) => worker.id === id));
+      excludedMassWorkers = excludedMassWorkers.filter((id) => workers.some((w) => w.id === id));
       const availableWorkers = workers.filter((worker) => !excludedMassWorkers.includes(worker.id));
 
       if (!workers.length) {
         massWorkersArea.innerHTML = '<div class="empty">Tambahkan pekerja terlebih dahulu untuk absensi massal.</div>';
         return;
       }
-
       if (!availableWorkers.length) {
         massWorkersArea.innerHTML = '<div class="empty">Semua pekerja sedang dikeluarkan dari daftar absensi massal.</div>';
         return;
@@ -851,13 +445,13 @@
       massWorkersArea.innerHTML = availableWorkers.map((worker) => `
         <div class="mass-worker">
           <label>
-            <input class="mass-worker-check" type="checkbox" value="${worker.id}" checked>
+            <input class="mass-worker-check" type="checkbox" value="${worker.id}" checked aria-label="Pilih ${escapeHTML(worker.name)} untuk absensi massal">
             <span>
-              ${worker.name}
-              <small>${worker.role} - ${rupiah.format(worker.rate)} / jam</small>
+              ${escapeHTML(worker.name)}
+              <small>${escapeHTML(worker.role)} - ${rupiah.format(worker.rate)} / jam</small>
             </span>
           </label>
-          <button class="danger" type="button" onclick="removeFromMassList('${worker.id}')">Hapus dari Daftar</button>
+          <button class="danger" type="button" data-remove-mass="${worker.id}">Hapus dari Daftar</button>
         </div>
       `).join("");
     }
@@ -885,13 +479,13 @@
                 const totalRecords = attendances.filter((item) => item.workerId === worker.id).length;
                 return `
                   <tr>
-                    <td>${worker.name}</td>
-                    <td>${worker.role}</td>
+                    <td>${escapeHTML(worker.name)}</td>
+                    <td>${escapeHTML(worker.role)}</td>
                     <td>${rupiah.format(worker.rate)}</td>
                     <td>${totalRecords} hari</td>
                     <td>
                       <div class="actions">
-                        <button class="danger" type="button" onclick="deleteWorker('${worker.id}')">Hapus</button>
+                        <button class="danger" type="button" data-delete-worker="${worker.id}">Hapus</button>
                       </div>
                     </td>
                   </tr>
@@ -908,9 +502,7 @@
         attendanceArea.innerHTML = '<div class="empty">Belum ada riwayat absensi.</div>';
         return;
       }
-
-      const sortedAttendances = [...attendances].sort((a, b) => b.date.localeCompare(a.date));
-
+      const sortedAttendances = [...attendances].sort((a,b) => b.date.localeCompare(a.date));
       attendanceArea.innerHTML = `
         <div class="table-wrap">
           <table>
@@ -928,21 +520,20 @@
             </thead>
             <tbody>
               ${sortedAttendances.map((item) => {
-                const worker = workers.find((entry) => entry.id === item.workerId);
+                const worker = workers.find((w) => w.id === item.workerId);
                 const rate = worker ? worker.rate : item.rate;
                 const salary = calculateSalary(Number(item.hours), Number(rate));
-
                 return `
                   <tr>
-                    <td>${item.date}</td>
-                    <td>${workerNameById(item.workerId)}</td>
+                    <td>${escapeHTML(item.date)}</td>
+                    <td>${escapeHTML(workerNameById(item.workerId))}</td>
                     <td>${salary.basicHours} jam</td>
                     <td>${salary.overtimeHours} jam</td>
                     <td>${rupiah.format(salary.basicPay)}</td>
                     <td>${rupiah.format(salary.overtimePay)}</td>
                     <td><strong>${rupiah.format(salary.totalPay)}</strong></td>
                     <td>
-                      <button class="danger" type="button" onclick="deleteAttendance('${item.id}')">Hapus</button>
+                      <button class="danger" type="button" data-delete-attendance="${item.id}">Hapus</button>
                     </td>
                   </tr>
                 `;
@@ -955,16 +546,11 @@
 
     function showSlip(workerId = slipWorker.value) {
       const worker = workers.find((item) => item.id === workerId);
-
       if (!worker) {
         salarySlipArea.innerHTML = '<div class="empty">Pekerja belum dipilih atau belum tersedia.</div>';
         return;
       }
-
-      const records = attendances
-        .filter((item) => item.workerId === worker.id)
-        .sort((a, b) => a.date.localeCompare(b.date));
-
+      const records = attendances.filter((item) => item.workerId === worker.id).sort((a,b) => a.date.localeCompare(b.date));
       const totals = records.reduce((result, item) => {
         const salary = calculateSalary(Number(item.hours), worker.rate);
         result.totalHours += Number(item.hours);
@@ -974,370 +560,249 @@
         result.overtimePay += salary.overtimePay;
         result.totalPay += salary.totalPay;
         return result;
-      }, {
-        totalHours: 0,
-        basicHours: 0,
-        overtimeHours: 0,
-        basicPay: 0,
-        overtimePay: 0,
-        totalPay: 0
-      });
+      }, { totalHours:0, basicHours:0, overtimeHours:0, basicPay:0, overtimePay:0, totalPay:0 });
 
       salarySlipArea.innerHTML = `
-        <div class="summary">
-          <div><span>Pekerja</span><strong>${worker.name}</strong></div>
-          <div><span>Gaji per Jam</span><strong>${rupiah.format(worker.rate)}</strong></div>
-          <div><span>Total Jam Kerja</span><strong>${totals.totalHours} jam</strong></div>
-          <div><span>Total Gaji</span><strong>${rupiah.format(totals.totalPay)}</strong></div>
-        </div>
-        <div class="summary">
-          <div><span>Jabatan</span><strong>${worker.role}</strong></div>
-          <div><span>Hari Masuk</span><strong>${records.length} hari</strong></div>
-          <div><span>Jam Basic</span><strong>${totals.basicHours} jam</strong></div>
-          <div><span>Jam Lembur</span><strong>${totals.overtimeHours} jam</strong></div>
-          <div><span>Gaji Lembur</span><strong>${rupiah.format(totals.overtimePay)}</strong></div>
-        </div>
-        ${records.length ? `
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Tanggal</th>
-                  <th>Total Jam</th>
-                  <th>Jam Basic</th>
-                  <th>Jam Lembur</th>
-                  <th>Total Gaji</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${records.map((item) => {
-                  const salary = calculateSalary(Number(item.hours), worker.rate);
-                  return `
-                    <tr>
-                      <td>${item.date}</td>
-                      <td>${item.hours} jam</td>
-                      <td>${salary.basicHours} jam</td>
-                      <td>${salary.overtimeHours} jam</td>
-                      <td>${rupiah.format(salary.totalPay)}</td>
-                    </tr>
-                  `;
-                }).join("")}
-              </tbody>
-            </table>
+        <div id="printArea">
+          <div class="summary">
+            <div><span>Pekerja</span><strong>${escapeHTML(worker.name)}</strong></div>
+            <div><span>Gaji per Jam</span><strong>${rupiah.format(worker.rate)}</strong></div>
+            <div><span>Total Jam Kerja</span><strong>${totals.totalHours} jam</strong></div>
+            <div><span>Total Gaji</span><strong>${rupiah.format(totals.totalPay)}</strong></div>
           </div>
-        ` : '<div class="empty">Belum ada absensi untuk pekerja ini.</div>'}
+          <div class="summary">
+            <div><span>Jabatan</span><strong>${escapeHTML(worker.role)}</strong></div>
+            <div><span>Hari Masuk</span><strong>${records.length} hari</strong></div>
+            <div><span>Jam Basic</span><strong>${totals.basicHours} jam</strong></div>
+            <div><span>Jam Lembur</span><strong>${totals.overtimeHours} jam</strong></div>
+            <div><span>Gaji Lembur</span><strong>${rupiah.format(totals.overtimePay)}</strong></div>
+          </div>
+          ${records.length ? `
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tanggal</th>
+                    <th>Jam Kerja</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${records.map(r => {
+                    const s = calculateSalary(Number(r.hours), worker.rate);
+                    return `
+                      <tr>
+                        <td>${escapeHTML(r.date)}</td>
+                        <td>${r.hours} jam</td>
+                        <td>${rupiah.format(s.totalPay)}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          ` : '<div class="empty">Belum ada absensi untuk pekerja ini.</div>'}
+        </div>
       `;
     }
 
-    function downloadSalarySlip() {
-      const worker = workers.find((item) => item.id === slipWorker.value);
-
-      if (!worker) {
-        alert("Pilih pekerja terlebih dahulu.");
-        return;
-      }
-
-      showSlip(worker.id);
-
-      const printWindow = window.open("", "_blank");
-      if (!printWindow) {
-        alert("Browser memblokir jendela PDF. Izinkan pop-up untuk halaman ini.");
-        return;
-      }
-
-      const fileName = `Slip Gaji - ${worker.name}`;
-      printWindow.document.open();
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html lang="id">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${fileName}</title>
-          <style>
-            @page {
-              size: A4 landscape;
-              margin: 12mm;
-            }
-            * { box-sizing: border-box; }
-            body {
-              margin: 0;
-              padding: 24px;
-              font-family: "Segoe UI", Arial, sans-serif;
-              color: #25322f;
-              background: #fffaf0;
-            }
-            .print-header {
-              margin-bottom: 18px;
-              padding-bottom: 14px;
-              border-bottom: 2px solid #b98546;
-            }
-            h1 {
-              margin: 0 0 6px;
-              font-size: 26px;
-            }
-            p {
-              margin: 0;
-              color: #69746f;
-            }
-            .summary {
-              display: grid;
-              grid-template-columns: repeat(4, 1fr);
-              gap: 10px;
-              margin-bottom: 12px;
-            }
-            .summary div {
-              padding: 12px;
-              border: 1px solid #ddd2bf;
-              border-radius: 8px;
-              background: #f7efe1;
-            }
-            .summary span {
-              display: block;
-              margin-bottom: 6px;
-              color: #69746f;
-              font-size: 11px;
-              font-weight: 800;
-              text-transform: uppercase;
-            }
-            .summary strong {
-              font-size: 15px;
-            }
-            .table-wrap {
-              overflow: visible;
-              border: 0;
-            }
-            table {
-              width: 100%;
-              min-width: 0;
-              border-collapse: collapse;
-              margin-top: 12px;
-              background: white;
-            }
-            th,
-            td {
-              padding: 9px;
-              border: 1px solid #ddd2bf;
-              text-align: left;
-              font-size: 12px;
-            }
-            th {
-              background: #eadcc5;
-              text-transform: uppercase;
-            }
-            .empty {
-              padding: 18px;
-              border: 1px dashed #ddd2bf;
-              border-radius: 8px;
-              text-align: center;
-              color: #69746f;
-              background: white;
-            }
-            @media print {
-              body {
-                width: 273mm;
-                padding: 0;
-                background: white;
-              }
-              tr {
-                page-break-inside: avoid;
-              }
-            }
-            @media (max-width: 720px) {
-              .summary { grid-template-columns: 1fr; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="print-header">
-            <h1>Slip Gaji Pekerja</h1>
-            <p>Absensi Kedai Coffee - ${new Date().toLocaleDateString("id-ID")}</p>
-          </div>
-          ${salarySlipArea.innerHTML}
-          <script>
-            setTimeout(() => {
-              window.focus();
-              window.print();
-            }, 700);
-          <\/script>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
+    // Announce to screen readers via live region
+    function announce(message) {
+      liveMessage.textContent = '';
+      setTimeout(() => { liveMessage.textContent = message; }, 50);
     }
 
-    function deleteWorker(id) {
-      if (!confirm("Hapus pekerja dan semua riwayat absensinya?")) return;
-      workers = workers.filter((worker) => worker.id !== id);
-      attendances = attendances.filter((item) => item.workerId !== id);
+    // Actions
+    function addWorker(name, role, rate) {
+      const worker = { id: createId(), name: name.trim(), role: role.trim(), rate: Number(rate) };
+      workers.push(worker);
       saveData();
       renderAll();
-      salarySlipArea.innerHTML = '<div class="empty">Pilih pekerja untuk melihat slip gaji.</div>';
+      announce('Pekerja ditambahkan');
     }
 
-    function deleteAttendance(id) {
-      attendances = attendances.filter((item) => item.id !== id);
-      saveData();
-      renderAll();
-      if (slipWorker.value) showSlip(slipWorker.value);
+    function deleteWorkerById(id) {
+      const idx = workers.findIndex(w => w.id === id);
+      if (idx === -1) return;
+      lastDeleted = { type: 'worker', data: workers[idx], relatedAttendances: attendances.filter(a => a.workerId === id) };
+      workers.splice(idx,1);
+      // Keep attendances but mark worker removed (or optionally remove). Here we keep attendances as-is.
+      saveData(); renderAll(); announce('Pekerja dihapus. Tekan Ctrl+Z untuk undo.');
+    }
+
+    function deleteAttendanceById(id) {
+      const idx = attendances.findIndex(a => a.id === id);
+      if (idx === -1) return;
+      lastDeleted = { type: 'attendance', data: attendances[idx] };
+      attendances.splice(idx,1);
+      saveData(); renderAll(); announce('Riwayat absensi dihapus. Tekan Ctrl+Z untuk undo.');
     }
 
     function removeFromMassList(id) {
-      if (!excludedMassWorkers.includes(id)) {
-        excludedMassWorkers.push(id);
-      }
-
+      excludedMassWorkers.push(id);
       renderMassWorkers();
+      announce('Pekerja dihapus dari daftar massal');
     }
 
-    function renderAll() {
-      renderWorkerOptions();
-      renderMassWorkers();
-      renderWorkers();
-      renderAttendances();
-    }
+    // Expose removeFromMassList globally for inline handlers if any exist
+    window.removeFromMassList = removeFromMassList;
 
-    workerForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-
-      const name = document.getElementById("workerName").value.trim();
-      const role = document.getElementById("workerRole").value.trim();
-      const rate = Number(document.getElementById("hourlyRate").value);
-
-      if (!name || !role || rate < 0) return;
-
-      workers.push({
-        id: createId(),
-        name,
-        role,
-        rate
-      });
-
-      saveData();
+    // Event wiring
+    workerForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('workerName').value;
+      const role = document.getElementById('workerRole').value;
+      const rate = document.getElementById('hourlyRate').value;
+      if (!name.trim() || !role.trim() || Number(rate) < 0) { announce('Periksa input pekerja'); return; }
+      addWorker(name, role, rate);
       workerForm.reset();
-      renderAll();
     });
 
-    attendanceForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-
-      const worker = workers.find((item) => item.id === attendanceWorker.value);
-      const date = document.getElementById("attendanceDate").value;
-      const hours = Number(document.getElementById("workHours").value);
-
-      if (!worker || !date || hours < 0) return;
-
-      attendances.push({
-        id: createId(),
-        workerId: worker.id,
-        date,
-        hours,
-        rate: worker.rate
-      });
-
-      saveData();
+    attendanceForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const workerId = attendanceWorker.value;
+      const date = document.getElementById('attendanceDate').value;
+      const hours = document.getElementById('workHours').value;
+      if (!workerId) { announce('Pilih pekerja terlebih dahulu'); return; }
+      if (!date || Number(hours) < 0) { announce('Periksa input absensi'); return; }
+      const attendance = { id: createId(), workerId, date, hours: Number(hours) };
+      attendances.push(attendance);
+      saveData(); renderAll(); announce('Absensi tersimpan');
       attendanceForm.reset();
-      document.getElementById("attendanceDate").valueAsDate = new Date();
-      renderAll();
-      showSlip(worker.id);
+      document.getElementById('attendanceDate').valueAsDate = new Date();
     });
 
-    massAttendanceForm.addEventListener("submit", (event) => {
-      event.preventDefault();
+    massAttendanceForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const date = document.getElementById('massAttendanceDate').value;
+      const hours = Number(document.getElementById('massWorkHours').value);
+      if (!date || Number(hours) < 0) { announce('Periksa input absensi massal'); return; }
+      const checks = Array.from(document.querySelectorAll('.mass-worker-check'));
+      const selected = checks.filter(c => c.checked).map(c => c.value);
+      if (!selected.length) { announce('Tidak ada pekerja terpilih'); return; }
+      selected.forEach(workerId => { attendances.push({ id: createId(), workerId, date, hours }); });
+      saveData(); renderAll(); announce('Absensi massal tersimpan');
+    });
 
-      const date = document.getElementById("massAttendanceDate").value;
-      const hours = Number(document.getElementById("massWorkHours").value);
-      const selectedIds = [...document.querySelectorAll(".mass-worker-check:checked")]
-        .map((input) => input.value);
+    slipForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      showSlip();
+    });
 
-      if (!date || hours < 0 || !selectedIds.length) {
-        alert("Pilih minimal satu pekerja untuk absensi massal.");
-        return;
+    // Buttons
+    toggleWorkersBtn.addEventListener('click', () => { workersVisible = !workersVisible; updateWorkersVisibility(); });
+    toggleAttendanceBtn.addEventListener('click', () => { attendanceVisible = !attendanceVisible; updateAttendanceVisibility(); });
+    toggleMassWorkersBtn.addEventListener('click', () => { massWorkersVisible = !massWorkersVisible; updateMassWorkersVisibility(); });
+    toggleSlipPickerBtn.addEventListener('click', () => { slipWorkerField.classList.toggle('is-hidden'); });
+
+    clearAllBtn.addEventListener('click', () => {
+      if (!confirm('Anda yakin ingin menghapus semua data? Tindakan ini tidak dapat dibatalkan.')) return;
+      lastDeleted = { type: 'all', data: { workers: [...workers], attendances: [...attendances] } };
+      workers = []; attendances = [];
+      saveData(); renderAll(); announce('Semua data dihapus. Tekan Ctrl+Z untuk undo.');
+    });
+
+    selectAllMassBtn.addEventListener('click', () => { document.querySelectorAll('.mass-worker-check').forEach(c => c.checked = true); announce('Semua pekerja dipilih'); });
+    clearMassBtn.addEventListener('click', () => { document.querySelectorAll('.mass-worker-check').forEach(c => c.checked = false); announce('Pilihan massal dikosongkan'); });
+
+    downloadSlipBtn.addEventListener('click', () => {
+      // If a slip is showing, open print dialog for the slip content
+      const printArea = document.getElementById('printArea');
+      if (!printArea) { announce('Tidak ada slip untuk dicetak. Pilih pekerja dan lihat slip terlebih dahulu.'); return; }
+      window.print();
+    });
+
+    themeToggle.addEventListener('click', () => { const next = document.documentElement.dataset.theme === 'night' ? 'day' : 'night'; setTheme(next); });
+
+    // Export / Import
+    exportBtn.addEventListener('click', () => {
+      const payload = { workers, attendances };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'absensi-export.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      announce('Data diekspor');
+    });
+
+    importBtn.addEventListener('click', () => {
+      const input = document.createElement('input'); input.type = 'file'; input.accept = 'application/json';
+      input.addEventListener('change', () => {
+        const file = input.files[0]; if (!file) return; const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            if (Array.isArray(data.workers) && Array.isArray(data.attendances)) {
+              workers = data.workers; attendances = data.attendances; saveData(); renderAll(); announce('Data berhasil diimpor');
+            } else alert('Format file tidak dikenali');
+          } catch (err) { alert('Gagal membaca file: ' + err.message); }
+        };
+        reader.readAsText(file);
+      });
+      input.click();
+    });
+
+    // Delegated handlers for dynamic buttons
+    document.addEventListener('click', (e) => {
+      const del = e.target.closest('[data-delete-worker]');
+      if (del) {
+        const id = del.getAttribute('data-delete-worker');
+        if (confirm('Hapus pekerja ini?')) deleteWorkerById(id);
       }
+      const delAtt = e.target.closest('[data-delete-attendance]');
+      if (delAtt) {
+        const id = delAtt.getAttribute('data-delete-attendance');
+        if (confirm('Hapus riwayat absensi ini?')) deleteAttendanceById(id);
+      }
+      const rmMass = e.target.closest('[data-remove-mass]');
+      if (rmMass) {
+        const id = rmMass.getAttribute('data-remove-mass');
+        removeFromMassList(id);
+      }
+    });
 
-      const batchId = createId();
-      selectedIds.forEach((workerId) => {
-        const worker = workers.find((item) => item.id === workerId);
-        if (!worker) return;
+    // Keyboard undo (Ctrl+Z)
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (!lastDeleted) { announce('Tidak ada tindakan untuk dibatalkan'); return; }
+        if (lastDeleted.type === 'worker') {
+          workers.push(lastDeleted.data);
+          // restore related attendances
+          attendances = attendances.concat(lastDeleted.relatedAttendances || []);
+          saveData(); renderAll(); announce('Penghapusan pekerja dibatalkan'); lastDeleted = null;
+        } else if (lastDeleted.type === 'attendance') {
+          attendances.push(lastDeleted.data); saveData(); renderAll(); announce('Penghapusan absensi dibatalkan'); lastDeleted = null;
+        } else if (lastDeleted.type === 'all') {
+          workers = lastDeleted.data.workers; attendances = lastDeleted.data.attendances; saveData(); renderAll(); announce('Semua data dikembalikan'); lastDeleted = null;
+        }
+      }
+    });
 
-        attendances.push({
-          id: createId(),
-          batchId,
-          workerId: worker.id,
-          date,
-          hours,
-          rate: worker.rate
-        });
-      });
+    // Persistence & render
+    function renderAll() {
+      renderWorkerOptions(); renderWorkers(); renderAttendances(); renderMassWorkers(); updateWorkersVisibility(); updateAttendanceVisibility(); updateMassWorkersVisibility();
+      // Keep slip select in sync
+      renderSlipSelection();
+    }
 
-      saveData();
-      massAttendanceForm.reset();
-      excludedMassWorkers = [];
-      document.getElementById("massAttendanceDate").valueAsDate = new Date();
+    function renderSlipSelection() {
+      // Keep slipWorker options selected if possible
+      // If no worker selected, choose first
+      if (!workers.length) {
+        slipWorkerField.classList.add('is-hidden');
+      }
+    }
+
+    // Initial setup
+    (function init() {
+      // Set theme button text
+      const theme = document.documentElement.dataset.theme || 'day';
+      themeToggle.textContent = theme === 'night' ? 'Mode Siang' : 'Mode Malam';
+      themeToggle.setAttribute('aria-pressed', String(theme === 'night'));
+
       renderAll();
-      showSlip(selectedIds[0]);
-    });
+      // Accessibility: focus states and instructions
+      announce('Aplikasi absensi siap');
+    })();
 
-    slipForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      showSlip();
-    });
-
-    slipWorker.addEventListener("change", () => {
-      showSlip();
-      slipWorkerField.classList.add("is-hidden");
-    });
-
-    downloadSlipBtn.addEventListener("click", () => {
-      downloadSalarySlip();
-    });
-
-    toggleSlipPickerBtn.addEventListener("click", () => {
-      slipWorkerField.classList.toggle("is-hidden");
-    });
-
-    clearAllBtn.addEventListener("click", () => {
-      if (!confirm("Hapus semua pekerja dan riwayat absensi?")) return;
-      workers = [];
-      attendances = [];
-      saveData();
-      renderAll();
-      salarySlipArea.innerHTML = '<div class="empty">Pilih pekerja untuk melihat slip gaji.</div>';
-    });
-
-    toggleWorkersBtn.addEventListener("click", () => {
-      workersVisible = !workersVisible;
-      updateWorkersVisibility();
-    });
-
-    toggleAttendanceBtn.addEventListener("click", () => {
-      attendanceVisible = !attendanceVisible;
-      updateAttendanceVisibility();
-    });
-
-    selectAllMassBtn.addEventListener("click", () => {
-      excludedMassWorkers = [];
-      renderMassWorkers();
-      document.querySelectorAll(".mass-worker-check").forEach((input) => {
-        input.checked = true;
-      });
-    });
-
-    clearMassBtn.addEventListener("click", () => {
-      document.querySelectorAll(".mass-worker-check").forEach((input) => {
-        input.checked = false;
-      });
-    });
-
-    themeToggle.addEventListener("click", () => {
-      const currentTheme = document.documentElement.dataset.theme || "day";
-      setTheme(currentTheme === "night" ? "day" : "night");
-    });
-
-    setTheme(document.documentElement.dataset.theme || "day");
-    renderAll();
-    updateWorkersVisibility();
-    updateAttendanceVisibility();
   </script>
 </body>
 </html>
